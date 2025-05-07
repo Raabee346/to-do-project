@@ -12,6 +12,8 @@ class Tasks extends Model
         'user_id',
         'title',
         'description',
+        'completed',
+        'favorite',
     ];
 
 }

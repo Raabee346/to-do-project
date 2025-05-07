@@ -10,9 +10,9 @@ use App\Models\User;
 
 
 class AuthController extends Controller {
-
+    
     public function register (Request $request) {
-
+        
         $Validate = Validator::make($request->all(), [
             'fname'      => 'required|string|max:100',
             'lname'      => 'required|string|max:100',
@@ -23,14 +23,27 @@ class AuthController extends Controller {
         // validation
         if ($Validate->fails()) {
             $Errors = $Validate->errors();
+            
+            $ErrMessage = "";
+            if ($Errors->has('email')) $ErrMessage = 'The email has already been taken.';
+            else $ErrMessage = 'Validation error';
 
-            if ($Errors->has('email')) return 'The email has already been taken.';
-            else return 'validation error';
-
+            return response()->json([
+                'error'     => true,
+                'reason'    => $ErrMessage,
+                'response'  => null
+            ]);
         }
 
         // register the user
-        return User::create($request->all());
+        $User = User::create($request->all());
+
+        // return the new user
+        return response()->json([
+            'error'     => false,
+            'reason'    => 'listed',
+            'response'  => $User
+        ]);
 
     }
 
@@ -42,27 +55,43 @@ class AuthController extends Controller {
 
         // validation
         if ($Validate->fails()) {
-            return 'validation error';
+            return response()->json([
+                'error'     => true,
+                'reason'    => 'Validation error',
+                'response'  => null
+            ]);
         }
 
         $User = User::where('email', $request->email)->first();
         if (!$User || !Hash::check($request->password, $User->password)) {
-            return "email and password didn't matched";
+            return response()->json([
+                'error'     => true,
+                'reason'    => "Email and Password didn't matched",
+                'response'  => null
+            ]);
         }
 
         // create token and return
         $token = $User->createToken('user')->plainTextToken;
 
-        return [
-            'success'   => true,
-            'token'     => $token
-        ];
+        return response()->json([
+            'error'     => false,
+            'reason'    => 'success',
+            'response'  => array (
+                'user'  => $User,
+                'token' => $token
+            ),
+        ]);
 
     }
 
     public function logout (Request $request, $id) {
         $request->user()->tokens()->delete();
-        return 'logout successfully!';
+        return response()->json([
+            'error'     => false,
+            'reason'    => 'success',
+            'response'  => null
+        ]);
     }
 
 }
